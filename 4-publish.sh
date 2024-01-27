@@ -22,6 +22,8 @@ fi
 echo "Commit any changes"
 git add your-scratch-extension
 git add dependencies
+git add your-extension-icon.png
+git add 4-publish.sh
 git commit -m "Update"
 git push origin master
 
