@@ -82,32 +82,29 @@ class Scratch3JeedomExtension {
         console.error(`Missing parameters ! method=${METHOD} url=${URL} api_key=${API_KEY}`);
         return 'false';
       }
-      console.debug(`Call Jeedom( method=${METHOD} url=${URL} api_key=${API_KEY} params=${PARAMS})`);
       var params = JSON.parse(PARAMS);
       params.apikey = API_KEY;
       var req = {jsonrpc: "2.0", id: "007", method: METHOD, params: params}; // TODO: generate unique ID
       console.debug('Call Jeedom:' + JSON.stringify(req));
 
-        return fetch(`${URL}/core/api/jeeApi.php`, {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json, text/plain, */*',
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
-            },
-            body: JSON.stringify(req)
-          })
-          .then((response) => {
-            console.debug(response);
-            if (response.ok) {
-              return response.json();
-            }
-            else {
-              return 'unknow error';
-            }
-          });
-      }
+      var myHeaders = new Headers();
+      myHeaders.append("Content-Type", "text/plain");
+
+      var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: JSON.stringify(req),
+        redirect: 'follow'
+      };
+
+      fetch(URL + "/core/api/jeeApi.php", requestOptions)
+        .then(response => response.text())
+        .then(result => {console.log(result); return result;})
+        .catch(error => console.log('error', error));
+      
+      console.debug('End of CallJeedomApi... ' + result);
+
+    }
 }
 
 module.exports = Scratch3JeedomExtension;
