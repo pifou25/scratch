@@ -55,3 +55,4 @@ git push origin gh-pages
 
 echo "Returning to dev branch"
 git checkout $DEVBRANCH
+git config --get remote.origin.url |  awk -F/ '{printf "visit: https://%s.github.io/%s/scratch/\n",$4,$5}'
