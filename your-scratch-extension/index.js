@@ -97,12 +97,10 @@ class Scratch3JeedomExtension {
         redirect: 'follow'
       };
 
-      fetch(URL + "/core/api/jeeApi.php", requestOptions)
+      return fetch(URL + "/core/api/jeeApi.php", requestOptions)
         .then(response => response.text())
         .then(result => {console.log(result); return result;})
-        .catch(error => console.log('error', error));
-      
-      console.debug('End of CallJeedomApi... ' + result);
+        .catch(error => {console.log('error', error); return error;});
 
     }
 }
