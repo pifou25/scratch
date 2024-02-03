@@ -4,6 +4,7 @@ const TargetType = require('../../extension-support/target-type');
 
 class Scratch3JeedomExtension {
 
+  // unique ID of any json-rps request
   uniqueId = 0;
 
   constructor (runtime) {
