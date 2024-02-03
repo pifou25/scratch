@@ -24,7 +24,7 @@ class Scratch3JeedomExtension {
     
         // colours to use for your extension blocks
         color1: '#454449',
-        color2: '#FEFEFE',
+        color2: '#C3C3C3',
     
         // your Scratch blocks
         blocks: [
