@@ -17,11 +17,11 @@ index ba18b91..e316f38 100644
  
  export default [
 +    {
-+        name: 'Your Extension',
++        name: 'Jeedom',
 +        extensionId: 'yourScratchExtension',
 +        iconURL: yourExtensionIconURL,
 +        insetIconURL: yourExtensionInsetIconURL,
-+        description: 'Your custom Scratch extension',
++        description: 'Jeedom Json RPC API',
 +        featured: true,
 +        disabled: false
 +    },
