@@ -4,170 +4,205 @@ const TargetType = require('../../extension-support/target-type');
 
 class Scratch3JeedomExtension {
 
-    constructor (runtime) {
-        this.runtime = runtime;
-        // put any setup for your extension here
-    }
+  uniqueId = 0;
 
-    /**
-     * Returns the metadata about your extension.
-     */
-    getInfo () {
-        return {
-          // unique ID for your extension
-          id: 'jeedom',
-      
-          // name displayed in the Scratch UI
-          name: 'jeedom',
-      
-          // colours to use for your extension blocks
-          color1: '#454449',
-          color2: '#FEFEFE',
-      
-          // your Scratch blocks
-          blocks: [
-            {
-              // function where your code logic lives
-              opcode: 'callJeedomApi',
-      
-              // type of block
-              blockType: BlockType.REPORTER,
-      
-              // label to display on the block
-              text: 'Call Jeedom API [URL] with [API_KEY], [METHOD] and Json encoded [PARAMS]',
-      
-              blockIconURI: 'data:image/png;base64,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',
+  constructor (runtime) {
+      this.runtime = runtime;
+      // put any setup for your extension here
+  }
 
-              // arguments used in the block
-              arguments: {
-                METHOD: {
-                  // name of API method
-                  defaultValue: "ping",
-      
-                  // type/shape of the parameter
+  /**
+   * Returns the metadata about your extension.
+   */
+  getInfo () {
+      return {
+        // unique ID for your extension
+        id: 'jeedom',
+    
+        // name displayed in the Scratch UI
+        name: 'jeedom',
+    
+        // colours to use for your extension blocks
+        color1: '#454449',
+        color2: '#FEFEFE',
+    
+        // your Scratch blocks
+        blocks: [
+          {
+            // function where your code logic lives
+            opcode: 'callJeedomApi',
+    
+            // type of block
+            blockType: BlockType.REPORTER,
+    
+            // label to display on the block
+            text: 'Call Jeedom API [URL] with [API_KEY], [METHOD] and Json encoded [PARAMS]',
+    
+            blockIconURI: 'data:image/png;base64,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',
+
+            // arguments used in the block
+            arguments: {
+              METHOD: {
+                // name of API method
+                defaultValue: "ping",
+    
+                // type/shape of the parameter
+                type: ArgumentType.STRING
+              },
+              URL: {
+                  // URL of Jeedom (e.g. http://192.168.0.12 or https://my.domaine.com)
+                  defaultValue: 'http://192.168.0.12',
                   type: ArgumentType.STRING
                 },
-                URL: {
-                    // URL of Jeedom (e.g. http://192.168.0.12 or https://my.domaine.com)
-                    defaultValue: 'http://192.168.0.12',
-                    type: ArgumentType.STRING
-                  },
-                API_KEY: {
-                    // Jeedom API key
-                    defaultValue: '',
-                    type: ArgumentType.STRING
-                  },
-                PARAMS: {
-                    // json list of parameters
-                    defaultValue: '{"apikey": "abc123", "datetime": "0"}',
-        
-                    // type/shape of the parameter
-                    type: ArgumentType.STRING
-                  }
-                }
-            },
-            {
-              opcode: 'jsonGetter',
-              blockType: BlockType.REPORTER,
-              text: 'Get [KEY] from [JSON_OBJ] object',
-              blockIconURI: 'data:image/png;base64,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',
-              arguments: {
-                JSON_OBJ: {
-                  defaultValue: "{}",
+              API_KEY: {
+                  // Jeedom API key
+                  defaultValue: '',
                   type: ArgumentType.STRING
                 },
-                KEY: {
-                    defaultValue: 'key',
-                    type: ArgumentType.STRING
-                  }
-                }
-            },
-            {
-              opcode: 'jsonSetter',
-              blockType: BlockType.REPORTER,
-              text: 'Set [KEY] to [VALUE] into [JSON_OBJ] object',
-              blockIconURI: 'data:image/png;base64,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',
-              arguments: {
-                JSON_OBJ: {
-                  defaultValue: "{}",
-                  type: ArgumentType.STRING
-                },
-                KEY: {
-                    defaultValue: 'key',
-                    type: ArgumentType.STRING
-                  },
-                VALUE: {
-                    defaultValue: 'value',
-                    type: ArgumentType.STRING
-                  }
-                }
-            },
-            {
-              opcode: 'jsonCount',
-              blockType: BlockType.REPORTER,
-              text: 'Count how many items are in [JSON_OBJ] object',
-              blockIconURI: 'data:image/png;base64,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',
-              arguments: {
-                JSON_OBJ: {
-                  defaultValue: "{}",
+              PARAMS: {
+                  // json list of parameters
+                  defaultValue: '{}',
                   type: ArgumentType.STRING
                 }
               }
+          },
+          {
+            opcode: 'jsonGetter',
+            blockType: BlockType.REPORTER,
+            text: 'Get [KEY] from [JSON_OBJ] object',
+            blockIconURI: ' data:image/png;base64,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',
+            arguments: {
+              JSON_OBJ: {
+                defaultValue: "{}",
+                type: ArgumentType.STRING
+              },
+              KEY: {
+                  defaultValue: 'key',
+                  type: ArgumentType.STRING
+                }
+              }
+          },
+          {
+            opcode: 'jsonSetter',
+            blockType: BlockType.REPORTER,
+            text: 'Set [KEY] to [VALUE] into [JSON_OBJ] object',
+            blockIconURI: ' data:image/png;base64,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',
+            arguments: {
+              JSON_OBJ: {
+                defaultValue: "{}",
+                type: ArgumentType.STRING
+              },
+              KEY: {
+                  defaultValue: 'key',
+                  type: ArgumentType.STRING
+                },
+              VALUE: {
+                  defaultValue: 'value',
+                  type: ArgumentType.STRING
+                }
+              }
+          },
+          {
+            opcode: 'jsonCount',
+            blockType: BlockType.REPORTER,
+            text: 'Count how many items are in [JSON_OBJ] object',
+            blockIconURI: ' data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAucSURBVHhe7VpZc1PnGX6t3ZvkHeMN4wWw8RqI2RMCzcIyCW3T6XLX6Uw7vehkpr+jM73qTDvTi7Q3zaRtGpKUuAmhLAUMtgPGSwy26wUrBpt41b72fV4dgWxLsiUdQ5z0GQ6yjs759L3Puz3fd5QWZFAMBAJ+mp+fIa/XRWlpacrZZwSepdlSQCZTpnJCHWiU16hwOm3kdjueufH4fp/PQ/fHviCHY1E5qw7iEhAM+p695xWkaTTkD/hocuIuk7CknE0dcQngr1Vevx7QaLSSltaJQXLY1YmENQj4+gEk+EHC/XuqpMOmIwAIkxBKh9RI2JQEABquCUiHyYnUImHTEgCEa8KkpENyhXFTEwBIJPhD6eBMgoRNTwDwJB24JiTYHb4RBAAgQQpjgunwjSEAWBYJ6yyMG0MA6yedXkt6ozZpJZmmSeP7daTVPZkili1rHfg+v9/LJAyS3bag3BkbcRdDNtssHwvC7Hqh0abxoaHZL5fI7fRRQWm2nIv9LasB430eP31lXaLMHCPlbsnisTxs0Pq8CsoRCRqNjkrKasloTA99EAWqEoCJBwNB6mofptHeaXIsumn/6R3UdLSSDfAqV60Ng0lH1z+4S/1X7jMBJtrZVkItxyrZszzVBIj0+32UlZXDR55yZjVUTQG9QUt9lydo8LqVW1OQLAWZlJVrYm8kMGsGfGLOz6AsNt7n9lPPhTEa6n4g4+Oz9R6hWIgP1QiA990OL92/+0hCfte+UjrzVhtV1BeS1+1TrlofvGz0rv2l9Abfv62hUIwZ758hvy+g+upUPQJ4Yl7OW5+HJ8k1oLQ2n0yZBpl0MvB7AxI9xVU58h5j+/3JjRUPqqYAEHYQJhvPeISzMUMv3SIWcH94DJUd/xiqE7AeaPUasg7N0o0P79GjyUV+H5uEjcZTJwDGzz+006V3+6n30jhd+esAOZfcUjeeBVQlAIVQCi+qcIzKr1GKpZc1go6Fkov/Rs+PWdyUYfC5jK8yVCEAEzOm68STLptXvIz3oVa0HDC2sMJCzdzXIXCee7mKsvPSo9cLvh11AuM7Fl3kYdIMPK6aRKRMAKQqev6DsXnq+nhEBI+lMINy2LhoRgkn/F/L8e108hd7pF3GKpboBAXlZtEDtjkX3fxoiGanbBJdaqVMSkpQx5V8enyBrp/ltTh73+8Lsoe0dOh7ddwG86SfxwOiPva3h6BnVTjcPUWd54Z5fL8UTHN+Oh3+fl3syFEQCHArzbJsnBJEPkPuzj2wkYeNhUFYwFgKMthLykVxsJbxAr4GEYW0Qh1A/UAUIB3USIWU1wKY1CwTMDOxQIMdVlriUK2oy6ejP2mgAEdE1OH5FAxCBEEl4rpoqhUEw8OfvN0jC6OcLRmcMmVUUGamHCZlLYm94REAsIlUVGGmVi5me09Us7DR0ENOi7kHdq4P0T0E4xE1Xe0jZJ/nFhjzOq2MhZWlKVNPh75bRw1HKiivOCvh9UUspEwAvIlcdy55mAgLZVgM4lW8x9OcaEDhHLh2X2rHyO3QIica0vh2+4JLiqGZ0yq3OFPG9Xnj15ZEkDoBEYBXuFvzX/FzE9fhgFdR2Nb0pTKcWl6PhKoELEN8DqR2RL4+K2wcAWsAxQ36YSNWeIlAfQKUKBWhEsO5qO4oZAaTlvK2ZMdshwiOsOBZV8tMAioSoKgzHhFKbekrJxnCm5orJo8iWX+wnM68tY8qm4rI61qxYcLXo0VqdVpRgADqqWYD0kU1AlCg0jMNlF+SzaEdoDsXx+jTP/WIRkDbiwS8CREDJRdNJ8D4qZFZav/jLRrqmhJC0GGweIojW5KCagRgkphby7HtIlRs8y7quzxOE/0zUdscDBEZG8Ue6AcYfveGVdpe6c48qj9ULgsptaHutjiPJEtcm4fG+qbltbp1q2xto+CtF0gbCKnR3ociq7EviJ0j6IG1uksk1qMEVX8uAKAWiNc5Z+NJ3Zjgy8NSGfUE+4Gx9hfi4alI4WiAt/FQBAsX8XyitYuvR3rgfg8XyGSMXy82hIDNhP8ToLx+a/GtJyBuF3C5F8jpXuJivjl5CgYDlG7MJpPRopxZjbgEjH4xRpMjVu7BeuXM5oLP66Wy6lLaXlepnFmNuARc/NtNutHeyxLXpJzZXHDaXbTvtUY6+mabcmY14hLwn7Pd1PVZP5kyjMqZzQWXw017j++mw2/sUc6sRurJzaIFix+vG6JntVTFOZ/HJ9tYsXZ04AM/fw6tL2NEAdyEz6KNAcUX6761kDIBUHqZORlUWlNMWfwa1vwwCj9rMaYbqKA0l9f9ZtHzK1Wdx+UV1WfOz+KVZA4ZMwxyn2yURJCJPQQjR6JWiwcxy43VG/Vk4O+RDYQEkXIKIMz2vdZEB062UMe5Hupo7xGjsXDZ853d1PriLjJlhu63LzjpH78/T/PTS0IGDC2rLaYDJ5qppLpIrsHaYeDGCHV83CORg51hkFRZV0LHf3yAlubs9MEfLpCXI0b2B/jf6z9/iRdN2fTe787T4qyNdLrQ6vPppMAyhLjEhBsO1jApzRKyN//VS13n+2l80EqOBZes9nANjD/zy+NifO/Ve3Tl/W6asc5S8ws76dTPXpQ9A9wPH+n0Oso0p1PxtgJqOrxTyAtHSHZuFmVZMkKExHRndKhCQDiG8IoDBu7eXyMTP8veuvRep0TT+b90PA5fnUFHL/2gTUL63NuXqf3PV6nz0z5697ftNHJngspqtjCJtUIUEBmozx2r55SySIQA2FlOFhuicLA1jp/KYdIuu1vCHWlgMLGeYCd5eeLFlQVihHVkmu59Pk7ZXD8ysk3yLKHr/ICMU9dWzctq3TKvol5gnLZXm2SZnCpUJwBR6GOPDNwckX2Ekz89QiVVRZyPHjEcBATYiIKtod/+fDk6HfKuEs7YR5yfWSTHkksIyuCw93OVD2O0b5IeTjyi+rYqiZJwhCSLDYkAeOj2pUEWUXdoS0UB/fDXJ5iIFyi3yEwe/F6QjU3PChVGRIhiewggkAscRAxSSTZWIjqHw+aiax/dlr8PnG6R18j0SBQbkwIcBgj76/+8Te/85hwNc07vaN1Gb/7qFSoqDz02l/1ABmrASiCKtNpQJRfbcEKBidvk0O0Jmhx+QOVcRHe0VpKboytZqENAFAeABOT9jHWO29a/6dLfO+X98y83shYIcLuyy3VoX5EOhI6AFsi0pJPT5g5FCHeDMEJPkoJPouBUs9SOZHeNEiOAvxttSfIZe31c0eVVydHHjuJXDytDfIZIQCHr596OUDXnZ0qKTI3OyH2V9aViAHIZRjhsTtpWVyr3wMuORaeIoEgYTAayDk/zmMOUU2gWEpPtBAkRAHGDan3wVAtt3V4oggc5Xt1YLp/buXDBehBT01TBxa9QvAdidu+vFu9NjT0SpuamF6nv2rD09uM/2i8eB0G1Ldvo8Out7OMg3bo4KN0kGkBQJ+sL0QMpgHvM+uHz+mgLC5G2VxvlQDSEvYNQR4VG0QpyGEMd5nOlRwgDCP/pyVnq/KRXrgEZVz/8XAioaa6QA9fiOhD42TsdHCXTQjIiLkwEfoGClMGOMUjsZqV68HSr6IpQeiSGhKUwLkd7qthVQgWs3TFZGD/Y+V+ZKEIexFhY21c1lPM6QGl33O8Hu0c5LbwyWQALIHx7VUOZpIIxXU+zDxdp6Na4KEIYD6ArFJbkUuPhHdIC+68PyxhIIT0rxOdfaRSCQIaTu0SYrPVI4bgEXHm/i7ovDKxaC6CfI+cgeMI3o39rIp4DYtKImDBwLby3MqTx9bL1HQwo44VkL4gMA45F10CdwPNC/Jw+PGvUDbcLaYCf6umXRQEI2MOq8ciZvcqZ1YieYApgkDyOWhFZyD+QgmqNtoRDDIugUtQfXxM+cO1K4wFMGBN/Mp5xmfEAjMW9SI9wCoSBGhP6DsPyFOA/MXdxShzE/bThQC2V7ywOPZLaZMCcMXfYEBtE/wNbrP+aNjXhqgAAAABJRU5ErkJggg==',
+            arguments: {
+              JSON_OBJ: {
+                defaultValue: "{}",
+                type: ArgumentType.STRING
+              }
             }
+          }
 
-          ]
-        };
-    }
-
-
-    /**
-     * implementation of the block with the opcode that matches this name
-     *  this will be called when the block is used
-     * implementation of Jeedom Json RPC API
-     * https://doc.jeedom.com/fr_FR/core/4.4/jsonrpc_api
-     */
-    callJeedomApi ({ METHOD, URL, API_KEY, PARAMS }) {
-      if(METHOD === undefined || METHOD == '' || URL == undefined || URL == '' || API_KEY == undefined || API_KEY == '') {
-        console.error(`Missing parameters ! method=${METHOD} url=${URL} api_key=${API_KEY}`);
-        return 'false';
-      }
-      var params = JSON.parse(PARAMS);
-      params.apikey = API_KEY;
-      var req = {jsonrpc: "2.0", id: "007", method: METHOD, params: params}; // TODO: generate unique ID
-      console.debug('Call Jeedom:' + JSON.stringify(req));
-
-      var myHeaders = new Headers();
-      myHeaders.append("Content-Type", "text/plain");
-
-      var requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: JSON.stringify(req),
-        redirect: 'follow'
+        ]
       };
+  }
 
-      return fetch(URL + "/core/api/jeeApi.php", requestOptions)
-        .then(response => response.text())
-        .then(result => {console.log(result); return result;})
-        .catch(error => {console.log('error', error); return error;});
 
+  /**
+   * implementation of the block with the opcode that matches this name
+   *  this will be called when the block is used
+   * implementation of Jeedom Json RPC API
+   * https://doc.jeedom.com/fr_FR/core/4.4/jsonrpc_api
+   */
+  callJeedomApi ({ METHOD, URL, API_KEY, PARAMS }) {
+    if(METHOD === undefined || METHOD == '' || URL == undefined || URL == '' || API_KEY == undefined || API_KEY == '') {
+      console.error(`Missing parameters ! method=${METHOD} url=${URL} api_key=${API_KEY}`);
+      return 'false';
     }
+    var params = JSON.parse(PARAMS);
+    params.apikey = API_KEY;
+    var req = {jsonrpc: "2.0", id: this.uniqueId++, method: METHOD, params: params}; // TODO: generate unique ID
+    console.debug('Call Jeedom:' + JSON.stringify(req));
 
-    jsonGetter({JSON_OBJ, KEY}) {
+    var myHeaders = new Headers();
+    myHeaders.append("Content-Type", "text/plain");
+
+    var requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: JSON.stringify(req),
+      redirect: 'follow'
+    };
+
+    return fetch(URL + "/core/api/jeeApi.php", requestOptions)
+      .then(response => response.text())
+      .then(result => {console.log(result); return result;})
+      .catch(error => {console.log('error', error); return error;});
+
+  }
+
+  jsonGetter({JSON_OBJ, KEY}) {
+    try{
       var obj = JSON.parse(JSON_OBJ);
-      return jsonPath(obj, KEY);
-    }
+      if(!isNaN(KEY)){
+        // if numeric key: check if obj is an array and has enough items
+        index = parseInt(KEY);
+        if(!Array.isArray(obj)){
+          console.log('numeric key but object is not an array.');
+        }else if(index > obj.length){
+          console.log(`${index} out of boud array ${obj.length}`);
+        }else{
+          return JSON.stringify(obj[index]);
+        }
+      }
+      var data = jsonPath(obj, KEY);
+      if(Array.isArray(data) && data.length == 1){
+        // bug jsonPath when it return a single array of array:
+        // get the first item
+        data = data[0]; 
+      }
 
-    jsonSetter({JSON_OBJ, KEY, VALUE}) {
-      var obj = JSON.parse(JSON_OBJ);
-      obj[KEY] = VALUE;
-      return JSON.stringify(obj);
-    }
+      return JSON.stringify(data);
 
-    jsonCount({JSON_OBJ}) {
-      var obj = JSON.parse(JSON_OBJ);
-      return obj.length;
+    }catch(error){
+      return(`"erreur": "${error}`);
     }
+  }
+
+  jsonSetter({JSON_OBJ, KEY, VALUE}) {
+    try{
+      var data = JSON.parse(JSON_OBJ);
+      data[KEY] = VALUE;
+      return JSON.stringify(data);
+    }catch(error){
+      return(`"erreur": "${error}`);
+    }
+  }
+
+  jsonCount({JSON_OBJ}) {
+    try{
+      var data = JSON.parse(JSON_OBJ);
+      if(Array.isArray(data)){
+        return data.length;
+      }else{
+        console.log(`pas une liste: ${data}`);
+      }
+    }catch(error){
+      return(`"erreur": "${error}`);
+    }
+  }
 
 }
 
