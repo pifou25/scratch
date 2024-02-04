@@ -86,3 +86,4 @@ function jsonPath(obj, expr, arg) {
     }
   } 
   
+  module.exports = jsonPath;

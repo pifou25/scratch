@@ -1,7 +1,7 @@
 const BlockType = require('../../extension-support/block-type');
 const ArgumentType = require('../../extension-support/argument-type');
 const TargetType = require('../../extension-support/target-type');
-const JsonPath = require('./jsonpath.js');
+const jsontPath = require('./jsonpath');
 
 class Scratch3JeedomExtension {
 
@@ -169,13 +169,21 @@ class Scratch3JeedomExtension {
           return JSON.stringify(obj[index]);
         }
       }
-      var data = JsonPath.jsonPath(obj, KEY);
+      if (KEY in obj) {
+        var out = obj[KEY]
+        var type = typeof(out)
+        if (type == "string" || type == "number")
+            return out
+        if (type == "boolean")
+            return type ? 1 : 0
+        return JSON.stringify(out)
+      }
+      var data = jsonPath(obj, KEY);
       if(Array.isArray(data) && data.length == 1){
         // bug jsonPath when it return a single array of array:
         // get the first item
         data = data[0]; 
       }
-
       return JSON.stringify(data);
 
     }catch(error){
