@@ -226,12 +226,14 @@ class Scratch3JeedomExtension {
     if(!this.events.has(EVENT)){
 
       event = new Event(EVENT, SECOND, currentMSecs);
-      this.callJeedomApi({METHOD: EVENT, PARAMS: '{}'}).then(function(result){
+      return this.callJeedomApi({ METHOD: EVENT, PARAMS: '{}'})
+      .then(result => {
         event.value = result;
-      });
-      this.events.set(event);
-      console.log(`add ${EVENT} with ${SECOND} polling time at ${currentMSecs}, with value ${event.value} (${this.events.size})`);
-      return false;
+        this.events.set(EVENT, event);
+        console.log(`add ${EVENT} with ${SECOND} polling time at ${currentMSecs}, with value ${event.value} (${this.events.size})`);
+        return false;
+      })
+      .catch(error => {console.log('error', error); return false;});
 
     }else{
 
@@ -241,21 +243,22 @@ class Scratch3JeedomExtension {
 
       else {
         // it's time to check a new value
-        value = this.callJeedomApi(event.method, '{}');
-        event.nextMSecs = currentMSecs + event.polling;
-        if(value == event.value){
-          // no change; go to next polling time
-          console.log(`${EVENT} did not change: ${value}`);
-          return false;
-        }else{
-          event.value = value;
-          console.log(`${EVENT} changed! ${event.value} => ${value}`);
-          return true; // change detected ! trigger
-        }
+        return this.callJeedomApi({METHOD: event.event, PARAMS: '{}'})
+        .then(value => {
+          event.nextMSecs = currentMSecs + event.polling;
+          if(value == event.value){
+            // no change; go to next polling time
+            console.log(`${EVENT} did not change: ${value}`);
+            return false;
+          }else{
+            event.value = value;
+            console.log(`${EVENT} changed! ${event.value} => ${value}`);
+            return true; // change detected ! trigger
+          }
+        })
+        .catch(error => {console.log('error', error); return false;});
       }
-
     }
-
   }
 
   jsonGetter({JSON_OBJ, KEY}) {
