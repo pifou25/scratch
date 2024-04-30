@@ -1,16 +1,34 @@
 const BlockType = require('../../extension-support/block-type');
 const ArgumentType = require('../../extension-support/argument-type');
 const TargetType = require('../../extension-support/target-type');
-const jsontPath = require('./jsonpath');
+const jsonPath = require('./jsonpath');
+
+class Event {
+  constructor({EVENT, PARAMS, PATH, POLLING, nextMSecs}){
+    this.event = EVENT;
+    this.params = PARAMS;
+    this.path = PATH;
+    this.polling = POLLING;
+    this.nextMSecs = nextMSecs;
+    this.value = '';
+  }
+}
+
+const POLL_INTERVAL = 2000; // minimum polling interval in milli-second
 
 class Scratch3JeedomExtension {
-
-  // unique ID of any json-rps request
-  uniqueId = 0;
-
+  
   constructor (runtime) {
       this.runtime = runtime;
       // put any setup for your extension here
+      // uniqueId for each API request
+      this.uniqueId = 0;
+      // save next polling date time
+      this.nextMSecs = runtime.currentMSecs + POLL_INTERVAL;
+      // url and key for Jeedom jsonrpc api
+      this.url = ''; // API URL
+      this.key = ''; // API KEY
+      this.events = new Map();
   }
 
   /**
@@ -31,6 +49,27 @@ class Scratch3JeedomExtension {
         // your Scratch blocks
         blocks: [
           {
+            // initialize URL and KEY for the API
+            opcode: 'initJeedomApi',
+            blockType: BlockType.BOOLEAN ,
+            text: 'Initialize Jeedom API [URL] and [API_KEY]',
+            blockIconURI: 'data:image/png;base64,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',
+
+            // arguments used in the block
+            arguments: {
+              URL: {
+                  // URL of Jeedom (e.g. http://192.168.0.12 or https://my.domaine.com)
+                  defaultValue: 'http://192.168.0.12',
+                  type: ArgumentType.STRING
+                },
+              API_KEY: {
+                  // Jeedom API key
+                  defaultValue: '',
+                  type: ArgumentType.STRING
+                }
+              }
+          },
+          {
             // function where your code logic lives
             opcode: 'callJeedomApi',
     
@@ -38,7 +77,7 @@ class Scratch3JeedomExtension {
             blockType: BlockType.REPORTER,
     
             // label to display on the block
-            text: 'Call Jeedom API [URL] with [API_KEY], [METHOD] and Json encoded [PARAMS]',
+            text: 'Call Jeedom API [METHOD] with Json encoded [PARAMS], return [PATH] value',
     
             blockIconURI: 'data:image/png;base64,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',
 
@@ -51,23 +90,42 @@ class Scratch3JeedomExtension {
                 // type/shape of the parameter
                 type: ArgumentType.STRING
               },
-              URL: {
-                  // URL of Jeedom (e.g. http://192.168.0.12 or https://my.domaine.com)
-                  defaultValue: 'http://192.168.0.12',
-                  type: ArgumentType.STRING
-                },
-              API_KEY: {
-                  // Jeedom API key
-                  defaultValue: '',
-                  type: ArgumentType.STRING
-                },
               PARAMS: {
                   // json list of parameters
                   defaultValue: '{}',
                   type: ArgumentType.STRING
-                }
+              },
+              PATH: {
+                defaultValue: '',
+                type: ArgumentType.STRING
               }
+            }
           },
+          {
+            opcode: 'eventListener',
+            blockType: BlockType.HAT,
+            text: 'Listen for [EVENT] with [PARAMS] and get [PATH] every [SECOND] seconds',
+            blockIconURI: 'data:image/png;base64,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',
+            arguments: {
+              EVENT: {
+                defaultValue: "command::object",
+                type: ArgumentType.STRING
+              },
+              PARAMS: {
+                // json list of parameters
+                defaultValue: '{}',
+                type: ArgumentType.STRING
+              },
+              PATH: {
+                defaultValue: '',
+                type: ArgumentType.STRING
+              },
+              SECOND: {
+                defaultValue: 5,
+                type: ArgumentType.NUMBER
+              }
+            }
+         },
           {
             opcode: 'jsonGetter',
             blockType: BlockType.REPORTER,
@@ -95,14 +153,14 @@ class Scratch3JeedomExtension {
                 type: ArgumentType.STRING
               },
               KEY: {
-                  defaultValue: 'key',
-                  type: ArgumentType.STRING
-                },
+                defaultValue: 'key',
+                type: ArgumentType.STRING
+              },
               VALUE: {
-                  defaultValue: 'value',
-                  type: ArgumentType.STRING
-                }
+                defaultValue: 'value',
+                type: ArgumentType.STRING
               }
+            }
           },
           {
             opcode: 'jsonCount',
@@ -124,19 +182,23 @@ class Scratch3JeedomExtension {
 
   /**
    * implementation of the block with the opcode that matches this name
-   *  this will be called when the block is used
+   *  this will be called when the block is used.
    * implementation of Jeedom Json RPC API
    * https://doc.jeedom.com/fr_FR/core/4.4/jsonrpc_api
    */
-  callJeedomApi ({ METHOD, URL, API_KEY, PARAMS }) {
-    if(METHOD === undefined || METHOD == '' || URL == undefined || URL == '' || API_KEY == undefined || API_KEY == '') {
-      console.error(`Missing parameters ! method=${METHOD} url=${URL} api_key=${API_KEY}`);
-      return 'false';
+  callJeedomApi ({ METHOD, PARAMS, PATH }) {
+    if(this.url == '' || this.apikey == '') {
+      console.error('Values not initialized ! url or api_key');
+      return () => 'callJeedomApi: Values not initialized ! url or api_key';
+    }
+    if(METHOD === undefined || METHOD == '') {
+      console.error('Missing parameter : method!');
+      return () => 'callJeedomApi: Missing parameter : method!';
     }
     var params = JSON.parse(PARAMS);
-    params.apikey = API_KEY;
-    var req = {jsonrpc: "2.0", id: this.uniqueId++, method: METHOD, params: params}; // TODO: generate unique ID
-    console.debug('Call Jeedom:' + JSON.stringify(req));
+    params.apikey = this.apikey;
+    var req = {jsonrpc: "2.0", id: this.uniqueId++, method: METHOD, params: params};
+    console.debug('Call Jeedom to get ' + PATH + ':' + JSON.stringify(req));
 
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", "text/plain");
@@ -148,13 +210,101 @@ class Scratch3JeedomExtension {
       redirect: 'follow'
     };
 
-    return fetch(URL + "/core/api/jeeApi.php", requestOptions)
+    return fetch(this.url + "/core/api/jeeApi.php", requestOptions)
       .then(response => response.text())
-      .then(result => {console.log(result); return result;})
-      .catch(error => {console.log('error', error); return error;});
+      .then(result => {
+        console.debug(result);
+        if(PATH !== null && PATH.trim().length !== 0){
+          return this.jsonGetter({JSON_OBJ: result, KEY: PATH});
+        }else{
+          return result;
+        }
+      })
+      .catch(error => {console.error('error', error); return error;});
 
   }
 
+
+  /**
+   * initialize Jeedom api configuration parameters: URL and KEY
+   * @param {*} param0 : contains URL: the Jeedom API url, and API_KEY
+   * @returns true
+   */
+  initJeedomApi({URL, API_KEY}){
+    if(URL == undefined || URL == '' || API_KEY == undefined || API_KEY == '') {
+      console.error('Missing parameters ! url or api_key');
+      return 'false';
+    }
+    this.url = URL;
+    this.apikey = API_KEY;
+    return true;
+  }
+
+
+  /**
+   * Check an event and trigger it if the value changed.
+   * @param {*} param0 contains EVENT : the Jeedom API key to check, and SECOND: the polling time in seconds
+   * @returns true if the EVENT value changed since the last call. false otherwise.
+   */
+  eventListener({EVENT, PARAMS, PATH, SECOND}) {
+
+    var currentMSecs = this.runtime.currentMSecs;
+    if (currentMSecs <= this.nextMSecs) 
+        return; // not a new polling cycle
+    this.nextMSecs = currentMSecs + POLL_INTERVAL;
+
+    if(this.url == '' || this.apikey == '') {
+      console.error('Values not initialized ! url or api_key');
+      return 'false';
+    }
+
+    if(!this.events.has(EVENT)){
+
+      // add a new listener for this EVENT
+      return this.callJeedomApi({ METHOD: EVENT, PARAMS: PARAMS, PATH: PATH})
+      .then(result => {
+        var event = new Event({EVENT: EVENT, PARAMS: PARAMS, PATH: PATH, POLLING: parseInt(SECOND) * 1000, nextMSecs: currentMSecs});
+        event.value = result;
+        // TODO: add unique key instead of string value EVENT:
+        this.events.set(EVENT, event);
+        console.info(`add ${event.event} with ${event.polling} polling time at ${event.nextMSecs}, with value ${event.value} (${this.events.size})`);
+        return false;
+      })
+      .catch(error => {console.error('error', error); return false;});
+
+    } else {
+
+      var event = this.events.get(EVENT);
+      // event found, check the next polling time
+      if(currentMSecs <= event.nextMSecs) {
+        return; // not a new polling cycle
+      } else {
+        // it's time to check a new value
+        return this.callJeedomApi({METHOD: event.event, PARAMS: event.params, PATH: event.path})
+        .then(value => {
+          event.nextMSecs = currentMSecs + event.polling;
+          if(value == event.value){
+            // no change; go to next polling time
+            return false;
+          }else{
+            console.info(`${event.event} ${event.path} changed! ${event.value} => ${value}`);
+            event.value = value;
+            return true; // change detected ! trigger
+          }
+        })
+        .catch(error => {console.error('error', error); return false;});
+      }
+    }
+  }
+
+
+  /**
+   * find the KEY into a JSON object.
+   * KEY can be a json path or a number (in case of array)
+   * JSON_OBJ is a string encoded JSON value
+   * @param {*} param0: find the KEY into a JSON object 
+   * @returns JSON encoded value of JSON_OBJ[KEY]
+   */
   jsonGetter({JSON_OBJ, KEY}) {
     try{
       var obj = JSON.parse(JSON_OBJ);
@@ -162,9 +312,9 @@ class Scratch3JeedomExtension {
         // if numeric key: check if obj is an array and has enough items
         index = parseInt(KEY);
         if(!Array.isArray(obj)){
-          console.log('numeric key but object is not an array.');
+          console.warn('numeric key but object is not an array.');
         }else if(index > obj.length){
-          console.log(`${index} out of boud array ${obj.length}`);
+          console.warn(`${index} out of boud array ${obj.length}`);
         }else{
           return JSON.stringify(obj[index]);
         }
@@ -191,6 +341,7 @@ class Scratch3JeedomExtension {
     }
   }
 
+
   jsonSetter({JSON_OBJ, KEY, VALUE}) {
     try{
       var data = JSON.parse(JSON_OBJ);
@@ -201,13 +352,19 @@ class Scratch3JeedomExtension {
     }
   }
 
+
+  /**
+   * count elements of a JSON array
+   * @param {*} param0: String encoded json that should be an array
+   * @returns the size of the JSON array
+   */
   jsonCount({JSON_OBJ}) {
     try{
       var data = JSON.parse(JSON_OBJ);
       if(Array.isArray(data)){
         return data.length;
       }else{
-        console.log(`pas une liste: ${data}`);
+        console.warn(`pas une liste: ${data}`);
       }
     }catch(error){
       return(`"erreur": "${error}`);
