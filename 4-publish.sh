@@ -25,7 +25,7 @@ git add dependencies
 git add your-extension-icon.png
 git add 4-publish.sh
 git commit -m "Update"
-git push origin master
+git push origin feature/hat
 
 echo "Building the Scratch fork"
 ./2-build.sh
